@@ -309,4 +309,5 @@ setup(name=f'kytos_{NAPP_NAME}',
           'Operating System :: POSIX :: Linux',
           'Programming Language :: Python :: 3.6',
           'Topic :: System :: Networking',
-      ])
+      ],
+      packages=[])
