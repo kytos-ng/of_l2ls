@@ -4,11 +4,7 @@ from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.helpers import listen_to
 from pyof.foundation.network_types import Ethernet
 # OpenFlow structures that differ will be imported versionwise.
-from pyof.v0x01.asynchronous.packet_in import PacketInReason
-from pyof.v0x01.common.action import ActionOutput as Output10
-from pyof.v0x01.common.phy_port import Port as Port10
-from pyof.v0x01.common.phy_port import PortConfig as PortConfig10
-from pyof.v0x01.controller2switch.packet_out import PacketOut as PacketOut10
+from pyof.v0x04.asynchronous.packet_in import PacketInReason
 from pyof.v0x04.common.action import ActionOutput as Output13
 from pyof.v0x04.common.port import PortConfig as PortConfig13
 from pyof.v0x04.common.port import PortNo as Port13
@@ -61,7 +57,7 @@ class Main(KytosNApp):
         destination = switch.id
         endpoint = f'{settings.FLOW_MANAGER_URL}/flows/{destination}'
         data = {'flows': [flow]}
-
+        # pylint: disable=missing-timeout
         requests.post(endpoint, json=data)
 
     @staticmethod
@@ -86,19 +82,7 @@ class Main(KytosNApp):
     @staticmethod
     def _create_packet_out(version, packet, ports, switch):
         """Create a PacketOut message with the appropriate version and data."""
-        if version == '0x01':
-            port = ports[0] if ports else Port10.OFPP_FLOOD
-
-            iface = switch.get_interface_by_port_no(port)
-
-            if iface and (iface.config & PortConfig10.OFPPC_NO_FWD ==
-                          PortConfig10.OFPPC_NO_FWD):
-                return None
-
-            packet_out = PacketOut10()
-            packet_out.actions.append(Output10(port=port))
-
-        else:
+        if version == '0x04':
             port = ports[0] if ports else Port13.OFPP_FLOOD
 
             iface = switch.get_interface_by_port_no(port)
@@ -153,6 +137,7 @@ class Main(KytosNApp):
             destination = switch.id
             endpoint = f'{settings.FLOW_MANAGER_URL}/flows/{destination}'
             data = {'flows': [flow]}
+            # pylint: disable=missing-timeout
             requests.post(endpoint, json=data)
 
         # Send the packet to correct destination or flood it
