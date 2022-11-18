@@ -3,6 +3,7 @@
 Run "python3 setup.py --help-commands" to list all available commands and their
 descriptions.
 """
+import json
 import os
 import shutil
 import sys
@@ -22,7 +23,7 @@ if 'bdist_wheel' in sys.argv:
 BASE_ENV = Path(os.environ.get('VIRTUAL_ENV', '/'))
 
 NAPP_NAME = 'of_l2ls'
-NAPP_VERSION = '1.2.1'
+NAPP_VERSION = '2022.2.2'
 
 # Kytos var folder
 VAR_PATH = BASE_ENV / 'var' / 'lib' / 'kytos'
@@ -34,13 +35,6 @@ CURRENT_DIR = Path('.').resolve()
 
 # NApps enabled by default
 CORE_NAPPS = ['of_core']
-
-
-# def read_version_from_json():
-#     """Read the NApp version from NApp kytos.json file."""
-#     file = Path('kytos.json')
-#     metadata = json.loads(file.read_text())
-#     return metadata['version']
 
 
 class SimpleCommand(Command):
@@ -67,32 +61,23 @@ class TestCommand(Command):
     """Test tags decorators."""
 
     user_options = [
-        ('size=', None, 'Specify the size of tests to be executed.'),
-        ('type=', None, 'Specify the type of tests to be executed.'),
+        ("k=", None, "Specify a pytest -k expression."),
     ]
-
-    sizes = ('small', 'medium', 'large', 'all')
-    types = ('unit', 'integration', 'e2e')
 
     def get_args(self):
         """Return args to be used in test command."""
-        return '--size %s --type %s' % (self.size, self.type)
+        if self.k:
+            return f"-k '{self.k}'"
+        return ""
 
     def initialize_options(self):
         """Set default size and type args."""
-        self.size = 'all'
-        self.type = 'unit'
+        self.k = ""
 
     def finalize_options(self):
         """Post-process."""
-        try:
-            assert self.size in self.sizes, ('ERROR: Invalid size:'
-                                             f':{self.size}')
-            assert self.type in self.types, ('ERROR: Invalid type:'
-                                             f':{self.type}')
-        except AssertionError as exc:
-            print(exc)
-            sys.exit(-1)
+        # pylint: disable=unnecessary-pass
+        pass
 
 
 class Cleaner(SimpleCommand):
@@ -112,17 +97,9 @@ class Test(TestCommand):
 
     description = 'run tests and display results'
 
-    def get_args(self):
-        """Return args to be used in test command."""
-        markers = self.size
-        if markers == "small":
-            markers = 'not medium and not large'
-        size_args = "" if self.size == "all" else "-m '%s'" % markers
-        return '--addopts="tests/%s %s"' % (self.type, size_args)
-
     def run(self):
         """Run tests."""
-        cmd = 'python setup.py pytest %s' % self.get_args()
+        cmd = f'python3 -m pytest tests/ {self.get_args()}'
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
@@ -138,8 +115,9 @@ class TestCoverage(Test):
 
     def run(self):
         """Run tests quietly and display coverage report."""
-        cmd = 'coverage3 run setup.py pytest %s' % self.get_args()
-        cmd += '&& coverage3 report'
+        # pylint: disable=fixme
+        # TODO revert this commit when issue 68 gets fixed
+        cmd = f'python3 -m pytest --cov=. tests/ {self.get_args()}'
         try:
             check_call(cmd, shell=True)
         except CalledProcessError as exc:
@@ -154,42 +132,9 @@ class Linter(SimpleCommand):
     description = 'lint Python source code'
 
     def run(self):
-        """Run Yala."""
+        """Run yala."""
         print('Yala is running. It may take several seconds...')
-        try:
-            check_call('yala *.py tests', shell=True)
-            print('No linter error found.')
-        except RuntimeError as error:
-            print('Linter check failed. Fix the error(s) above and try again.')
-            print(error)
-            sys.exit(-1)
-
-
-class CITest(TestCommand):
-    """Run all CI tests."""
-
-    description = 'run all CI tests: unit and doc tests, linter'
-
-    def run(self):
-        """Run unit tests with coverage, doc tests and linter."""
-        coverage_cmd = 'python3.6 setup.py coverage %s' % self.get_args()
-        lint_cmd = 'python3.6 setup.py lint'
-        cmd = '%s && %s' % (coverage_cmd, lint_cmd)
-        check_call(cmd, shell=True)
-
-
-class KytosInstall:
-    """Common code for all install types."""
-
-    @staticmethod
-    def enable_core_napps():
-        """Enable a NAPP by creating a symlink."""
-        (ENABLED_PATH / 'kytos').mkdir(parents=True, exist_ok=True)
-        for napp in CORE_NAPPS:
-            napp_path = Path('kytos', napp)
-            src = ENABLED_PATH / napp_path
-            dst = INSTALLED_PATH / napp_path
-            symlink_if_different(src, dst)
+        check_call('yala *.py tests', shell=True)
 
 
 class InstallMode(install):
@@ -215,7 +160,7 @@ class EggInfo(egg_info):
         """Python wheels are much faster (no compiling)."""
         print('Installing dependencies...')
         check_call([sys.executable, '-m', 'pip', 'install', '-r',
-                    'requirements/run.in'])
+                    'requirements/run.txt'])
 
 
 class DevelopMode(develop):
@@ -235,7 +180,7 @@ class DevelopMode(develop):
         else:
             self._create_folder_symlinks()
             # self._create_file_symlinks()
-            KytosInstall.enable_core_napps()
+            # KytosInstall.enable_core_napps()
 
     @staticmethod
     def _create_folder_symlinks():
@@ -254,12 +199,12 @@ class DevelopMode(develop):
         dst = ENABLED_PATH / Path('kytos', NAPP_NAME)
         symlink_if_different(dst, src)
 
-    @staticmethod
-    def _create_file_symlinks():
-        """Symlink to required files."""
-        src = ENABLED_PATH / '__init__.py'
-        dst = CURRENT_DIR / 'napps' / '__init__.py'
-        symlink_if_different(src, dst)
+    # @staticmethod
+    # def _create_file_symlinks():
+    #     """Symlink to required files."""
+    #     src = ENABLED_PATH / '__init__.py'
+    #     dst = CURRENT_DIR / 'napps' / '__init__.py'
+    #     symlink_if_different(src, dst)
 
 
 def symlink_if_different(path, target):
@@ -275,19 +220,36 @@ def symlink_if_different(path, target):
         path.symlink_to(target)
 
 
+def read_version_from_json():
+    """Read the NApp version from NApp kytos.json file."""
+    file = Path('kytos.json')
+    metadata = json.loads(file.read_text(encoding="utf8"))
+    return metadata['version']
+
+
+def read_requirements(path="requirements/run.txt"):
+    """Read requirements file and return a list."""
+    with open(path, "r", encoding="utf8") as file:
+        return [
+            line.strip()
+            for line in file.readlines()
+            if not line.startswith("#")
+        ]
+
+
 setup(name=f'kytos_{NAPP_NAME}',
-      version=NAPP_VERSION,
+      version=read_version_from_json(),
       description='Core Napps developed by Kytos Team',
       url='http://github.com/kytos/{NAPP_NAME}',
       author='Kytos Team',
       author_email='of-ng-dev@ncc.unesp.br',
       license='MIT',
-      install_requires=['setuptools >= 36.0.1'],
-      setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      install_requires=read_requirements() + ['setuptools >= 36.0.1'],
+      packages=[],
       extras_require={
           'dev': [
-              'coverage',
+              'pytest==7.0.0',
+              'pytest-cov==3.0.0',
               'pip-tools',
               'yala',
               'tox',
@@ -295,7 +257,6 @@ setup(name=f'kytos_{NAPP_NAME}',
       },
       cmdclass={
           'clean': Cleaner,
-          'ci': CITest,
           'coverage': TestCoverage,
           'develop': DevelopMode,
           'install': InstallMode,
@@ -307,7 +268,5 @@ setup(name=f'kytos_{NAPP_NAME}',
       classifiers=[
           'License :: OSI Approved :: MIT License',
           'Operating System :: POSIX :: Linux',
-          'Programming Language :: Python :: 3.6',
           'Topic :: System :: Networking',
-      ],
-      packages=[])
+      ])
