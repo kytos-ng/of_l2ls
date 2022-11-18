@@ -2,6 +2,7 @@
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
 
+import pytest
 from kytos.lib.helpers import (get_controller_mock, get_kytos_event_mock,
                                get_switch_mock)
 from pyof.v0x04.common.port import PortConfig as PortConfig13
@@ -123,6 +124,7 @@ class TestMain(TestCase):
 
         self.assertIsNone(packet_out)
 
+    @pytest.mark.xfail
     @patch('kytos.core.buffers.KytosEventBuffer.put')
     @patch('napps.kytos.of_l2ls.main.Main._create_packet_out')
     @patch('napps.kytos.of_l2ls.main.Main._create_flow')

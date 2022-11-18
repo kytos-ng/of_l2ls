@@ -6,7 +6,7 @@
 #
 -e git+https://github.com/kytos-ng/kytos.git#egg=kytos
     # via -r requirements/dev.in
--e file:///home/alopalao/Desktop/back/of_l2ls
+-e .
     # via -r requirements/dev.in
 -e git+https://github.com/kytos-ng/python-openflow.git#egg=python-openflow
     # via
