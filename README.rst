@@ -30,12 +30,13 @@ a change is detected.
 Installing
 **********
 
-All of the Kytos Network Applications are located in the NApps online
-repository. To install this NApp, run:
+To install this NApp, first, make sure to have the same venv activated as you have ``kytos`` installed on:
 
 .. code:: shell
 
-   $ kytos napps install kytos/of_l2ls
+   $ git clone https://github.com/kytos-ng/of_l2ls.git
+   $ cd of_l2ls
+   $ python3 setup.py develop
 
 ************
 Requirements
