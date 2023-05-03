@@ -2,6 +2,7 @@
 import requests
 from kytos.core import KytosEvent, KytosNApp, log
 from kytos.core.helpers import listen_to
+from napps.kytos.of_l2ls import settings
 from pyof.foundation.network_types import Ethernet
 # OpenFlow structures that differ will be imported versionwise.
 from pyof.v0x04.asynchronous.packet_in import PacketInReason
@@ -9,8 +10,6 @@ from pyof.v0x04.common.action import ActionOutput as Output13
 from pyof.v0x04.common.port import PortConfig as PortConfig13
 from pyof.v0x04.common.port import PortNo as Port13
 from pyof.v0x04.controller2switch.packet_out import PacketOut as PacketOut13
-
-from napps.kytos.of_l2ls import settings
 
 
 class Main(KytosNApp):
