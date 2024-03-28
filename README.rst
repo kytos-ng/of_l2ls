@@ -36,7 +36,10 @@ To install this NApp, first, make sure to have the same venv activated as you ha
 
    $ git clone https://github.com/kytos-ng/of_l2ls.git
    $ cd of_l2ls
-   $ python3 setup.py develop
+   $ python3 -m pip install --editable .
+
+To install the kytos environment, please follow our
+`development environment setup <https://github.com/kytos-ng/documentation/blob/master/tutorials/napps/development_environment_setup.rst>`_.
 
 ************
 Requirements
