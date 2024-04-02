@@ -2,14 +2,6 @@
 Overview
 ########
 
-**WARNING: As previously announced on our communication channels, the Kytos
-project will enter the "shutdown" phase on May 31, 2021. After this date,
-only critical patches (security and core bug fixes) will be accepted, and the
-project will be in "critical-only" mode for another six months (until November
-30, 2021). For more information visit the FAQ at <https://kytos.io/faq>. We'll
-have eternal gratitude to the entire community of developers and users that made
-the project so far.**
-
 |License| |Build| |Coverage| |Quality|
 
 The **of_l2ls** application is used in basic operation of switches. It
@@ -36,7 +28,10 @@ To install this NApp, first, make sure to have the same venv activated as you ha
 
    $ git clone https://github.com/kytos-ng/of_l2ls.git
    $ cd of_l2ls
-   $ python3 setup.py develop
+   $ python3 -m pip install --editable .
+
+To install the kytos environment, please follow our
+`development environment setup <https://github.com/kytos-ng/documentation/blob/master/tutorials/napps/development_environment_setup.rst>`_.
 
 ************
 Requirements
